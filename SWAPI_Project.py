@@ -30,6 +30,7 @@ def get_swapi_resource(resource_type, resource_id=None, search_query=None):
 
 def save_request(response, filename):
     """saves json response to file in requests_data directory"""
+    
     os.makedirs("requests_data", exist_ok=True)
     with open(f"request_data/{filename}.json", "w") as file:
         json.dump(response, file,indent=4)
@@ -124,20 +125,53 @@ def compare_info(search_1, search_2, search_type):
         print("No Results Found")
 
 
-# def find_character_connections(character_1, character_2):
+def find_character_connections(character_1, character_2):
+    """Find similarities between two characters and prints them"""
 
-#     data_1 = get_swapi_resource("people", None, character_1)
-#     data_2 = get_swapi_resource("people", None, character_2)
+    #query each search term
+    data_1 = get_swapi_resource("people", None, character_1)
+    data_2 = get_swapi_resource("people", None, character_2)
 
-#     if data_1 and data_2 and data_1["count"] > 0 and data_2["count"] > 0:
-#         top_result_1 = data_1["results"][0]
-#         for k,v in top_result_1.items():
-#             top_result_1[k] = get_url_name_field(k,v)
-#         top_result_2 = data_2["results"][0]
-#         for k,v in top_result_2.items():
-#             top_result_2[k] = get_url_name_field(k,v)
+    #if results found
+    if data_1 and data_2 and data_1["count"] > 0 and data_2["count"] > 0:
+        
+        #query endpoints in lists
+        top_result_1 = data_1["results"][0]
+        for k,v in top_result_1.items():
+            top_result_1[k] = get_url_name_field(k,v)
+        
+        top_result_2 = data_2["results"][0]
+        for k,v in top_result_2.items():
+            top_result_2[k] = get_url_name_field(k,v)
+        
+        #store potential matches 
+        matches = {}
+
+        #check for matches between results
+        for key in top_result_1:
+            if key in top_result_2:
+                value_1, value_2 = top_result_1[key], top_result_2[key]
+
+                #check for overlap between values that are lists
+                if isinstance(value_1, list) and isinstance(value_2, list):
+                    shared_values = list(set(value_1) & set(value_2))        
+                    if shared_values:
+                        matches[key] = shared_values
+
+                #if there are matches add them to dict matches
+                elif value_1 == value_2:
+                    matches[key] = value_1
+
+        #print results            
+        print(f"\nConnections found between {top_result_1["name"]} and {top_result_2["name"]}")
+        for k, v in matches.items():
+            print(f"{k}: {v}")
+    
+    #if one of the search terms returns no results, print no results found
+    else:
+        print("No Results found")
 
 
 
 
-#compare_info("chewbacca","luke","people")
+find_character_connections("chewbacca","han solo")

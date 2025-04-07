@@ -4,6 +4,9 @@ import os
 
 class SWAPI():
 
+    """Class for working with Star Wars API"""
+
+
     def __init__(self, base_url):
         self.base_url = base_url
 
@@ -31,12 +34,26 @@ class SWAPI():
             print(f"Error: {response.status_code}")
             return None
 
-    def save_request(self, response, filename):
+    def save_request(self, query, dict, filename):
         """saves json response to file in requests_data directory"""
-        
+        query_dict = {}
+        query_dict[query] = dict
         os.makedirs("requests_data", exist_ok=True)
-        with open(f"request_data/{filename}.json", "w") as file:
-            json.dump(response, file,indent=4)
+        if os.path.exists(f"requests_data/{filename}.json"):
+            with open(f"requests_data/{filename}.json", "r+") as file:
+                data = json.load(file)
+                data.update(query_dict)
+
+                file.seek(0)
+
+                json.dump(data, file, indent=4)
+
+                file.truncate()
+
+        else:
+            with open(f"requests_data/{filename}.json", "w") as file:
+                data = query_dict
+                json.dump(data, file,indent=4)
 
     
     def search_by_character(self, name):
@@ -46,13 +63,11 @@ class SWAPI():
         
         #if results are found
         if data and data["count"] > 0:
+            
+            #save the data to file
+            self.save_request(name, data["results"][0], "people")
             return data["results"][0]
-            #iterate over results and print
-            # for k, v in data["results"][0].items(): 
-
-            #     new_value = self.get_url_name_field(k,v)
-                    
-            #     print(f"{k}: {new_value}")
+           
         else:
             return "No Results Found"
 
@@ -111,6 +126,10 @@ class SWAPI():
         #check if any results are returned
         if data_1 and data_2 and data_1["count"] > 0 and data_2["count"] > 0:
             
+            #save results
+            self.save_request(search_1, data_1["results"][0], search_type)
+            self.save_request(search_2, data_2["results"][0], search_type)
+
             #isolate top result for both and grab name fields for urls
             top_result_1 = data_1["results"][0]
             for k,v in top_result_1.items():
@@ -120,10 +139,7 @@ class SWAPI():
             for k,v in top_result_2.items():
                 top_result_2[k] = self.get_url_name_field(k,v)
 
-            #print comparison between both dictionaries    
-            # print("\nComparison:")
-            # for (k,v), (k2,v2) in zip(top_result_1.items(),top_result_2.items()):
-            #     print(f"{k}: {v} vs {v2}")
+            
             return zip(top_result_1.items(),top_result_2.items())
         
         else:
@@ -139,6 +155,10 @@ class SWAPI():
 
         #if results found
         if data_1 and data_2 and data_1["count"] > 0 and data_2["count"] > 0:
+            
+            #save to file
+            self.save_request(character_1, data_1["results"][0], "people")
+            self.save_request(character_2, data_2["results"][0], "people")
             
             #query endpoints in lists
             top_result_1 = data_1["results"][0]
@@ -167,10 +187,6 @@ class SWAPI():
                     elif value_1 == value_2:
                         matches[key] = value_1
 
-            #print results            
-            # print(f"\nConnections found between {top_result_1['name']} and {top_result_2['name']}")
-            # for k, v in matches.items():
-            #     print(f"{k}: {v}")
             return matches
         
         #if one of the search terms returns no results, print no results found

@@ -1,6 +1,7 @@
 import requests
 import json
 import os
+import matplotlib.pyplot as plt
 
 class SWAPI():
 
@@ -192,6 +193,28 @@ class SWAPI():
         #if one of the search terms returns no results, print no results found
         else:
             return "No Results found"
+        
+    def graph_most_common(self, search_type, key):
+
+        """graph the most common of the queired type (species, starships) at the specified key"""
+        data = self.get_swapi_resource(search_type)
+        #not going to save this query to file since it will literally save every datapoint from the endpoint
+        results = {}
+        
+        for data in data["results"]:
+            results[data[key]] += 1
+
+        names = [i for i in results.keys()]
+        counts = [results[i] for i in results.items()]
+
+        plt.bar(names, counts)
+        plt.xlabel(f"{key}s")
+        plt.ylabel("Count")
+        plt.xticks(rotation=45)
+        plt.title(f"Most Common {key}s")
+        plt.show()
+
+
 
 def main():
     base_url = "https://swapi.dev/api"
@@ -261,7 +284,26 @@ def main():
             else:
                 print(data)
 
-        elif choice == "4": 
+        elif choice == "4":
+
+            search_types = ["species","starships", "vehicles"] 
+            
+
+            #query search terms 
+            
+            search_type = input(f"Please input search type: {search_types}")
+
+            while search_type not in search_types: 
+                search_type = input(f"Please input valid search type: {search_types}")
+
+            if search_type == "species":
+                key = "name"
+            elif search_type == "vehicles" or search_type == "starships":
+                key = "manufacturer"
+
+            sw_api.graph_most_common(search_type, key)
+
+        elif choice == "5": 
             print("Exiting program. May the Force be with you!")
             break
 

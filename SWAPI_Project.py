@@ -1,6 +1,8 @@
 import requests
 import json
 import os
+from collections import Counter
+import matplotlib as plt
 
 
 
@@ -194,7 +196,27 @@ class SWAPI():
         #if one of the search terms returns no results, print no results found
         else:
             return "No Results found"
-        4
+        
+    def show_most_common(self,category):
+        url = f"{self.base_url}/{category}"
+        all_results = []
+
+        while url:
+            response = requests.get(url)
+            if response.status_code != 200:
+                print(f"Error: {response.status_code}")
+                break
+            
+            data = response.json()
+            all_results.extend(data["results"])
+            url = data.get('next')
+
+        if not all_results:
+            return "No Results Found"
+
+        name_counts = Counter(result["name"] for result in all_results)       
+
+        return name_counts
 
 def main():
     base_url = "https://swapi.dev/api"
@@ -205,7 +227,8 @@ def main():
         print("1. Search by character")
         print("2. Compare Info")
         print("3. Find Character Connections")
-        print("4. Exit")
+        print("4. Show Most Common By Category")
+        print("5. Exit")
 
         choice = input("Please make selection: ")
 
@@ -254,6 +277,7 @@ def main():
             search_term_1 = input("Please input first character: ")
             search_term_2 = input("Please input second character: ")
 
+            #query search terms 
             data = sw_api.find_character_connections(search_term_1, search_term_2)
 
             if isinstance(data, dict):
@@ -264,7 +288,34 @@ def main():
             else:
                 print(data)
 
-        elif choice == "4": 
+        elif choice == "4":
+            search_types = ["species","starships","vehicles"] 
+
+            #query search terms 
+            search_type = input(f"Please input category: {search_types}")
+        
+            while search_type not in search_types: 
+                search_type = input(f"Please input valid search type: {search_types}")
+
+            data = sw_api.show_most_common(search_type)
+
+            #plot if results are found
+            if isinstance(dict, data):
+
+                x_names = data.keys()
+                y_counts = data.values()
+
+                plt.plot(x_names, y_counts)
+                plt.xlabel(f"{search_type}")
+                plt.ylabel("Counts")
+                plt.title(f"Most common {search_type}")
+                plt.show()
+            
+            else:
+                print("No Results Found")
+
+
+        elif choice == "5": 
             print("Exiting program. May the Force be with you!")
             break
 
